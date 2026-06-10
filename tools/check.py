@@ -89,26 +89,59 @@ def run():
     print(f"[OK] 페이지 {len(files)}개 — title/description 고유성, JSON-LD 파싱 점검 완료"
           if fails == 0 else f"… 위 항목 확인 필요")
 
-    # 3) 인덱스(허브) 페이지 본문 분량 (목표 2,000~2,500자, 공백 포함)
-    index_pages = ["/", "/geumcheon-gu/", "/geumcheon-gu/area/",
-                   "/geumcheon-gu/stations/", "/themes/", "/course/"]
-    for p in index_pages:
-        f = os.path.join(ROOT, "index.html") if p == "/" else \
-            os.path.join(ROOT, p.strip("/"), "index.html")
+    # 3) 전 페이지 본문 분량 감사 (목표 2,000~2,500자, 공백 포함 / 홈은 카드·히어로 포함 상한 완화)
+    # 법적 고지 문서(정책 3종)는 분량 예외 — 억지 패딩 금지 원칙(필요 조항만 명시)
+    POLICY_EXEMPT = {"/privacy/", "/terms/", "/youth/"}
+    short_pages, long_pages, total = [], [], 0
+    for f in files:
+        rel = os.path.relpath(f, ROOT).replace(os.sep, "/")
+        p = "/" if rel == "index.html" else "/" + rel[: -len("index.html")]
         n = len(main_text(f))
-        flag = "OK" if n >= 2000 else "WARN"
-        print(f"[{flag}] 본문 분량 {p}: {n:,}자 (공백 포함)")
+        total += 1
+        if p in POLICY_EXEMPT:
+            if n < 500:
+                short_pages.append((n, p))
+            continue
+        hi = 3000 if p == "/" else 2600
         if n < 2000:
-            fails += 1
+            short_pages.append((n, p))
+        elif n > hi:
+            long_pages.append((n, p))
+    for n, p in sorted(short_pages):
+        print(f"[FAIL] 분량 미달 {p}: {n:,}자 (<2,000)")
+    for n, p in sorted(long_pages):
+        print(f"[FAIL] 분량 초과 {p}: {n:,}자")
+    fails += len(short_pages) + len(long_pages)
+    if not short_pages and not long_pages:
+        print(f"[OK] 전 페이지({total}) 본문 분량 2,000자 이상 (공백 포함)")
 
-    # 3b) 매거진 글 본문 분량 (목표 2,000~2,500자, 공백 포함)
-    for p in posts:
-        f = os.path.join(ROOT, p.strip("/"), "index.html")
-        n = len(main_text(f))
-        flag = "OK" if 2000 <= n <= 2600 else "WARN"
-        print(f"[{flag}] 매거진 분량 {p}: {n:,}자 (공백 포함)")
-        if not (2000 <= n <= 2600):
-            fails += 1
+    # 3b) title/description 유사도 감사 (그룹 내 과도한 템플릿 복제 탐지)
+    def tri(t):
+        t = re.sub(r"\s+", "", t)
+        return {t[i:i + 3] for i in range(len(t) - 2)}
+
+    def txt_sim(a, b):
+        A, B = tri(a), tri(b)
+        return len(A & B) / len(A | B) if A | B else 0.0
+
+    metas = []
+    for f in files:
+        h = open(f, encoding="utf-8").read()
+        t = re.search(r"<title>(.*?)</title>", h, re.S).group(1)
+        d = re.search(r'name="description" content="(.*?)"', h).group(1)
+        metas.append((f, t, d))
+    warn = 0
+    for i in range(len(metas)):
+        for j in range(i + 1, len(metas)):
+            st = txt_sim(metas[i][1], metas[j][1])
+            sd = txt_sim(metas[i][2], metas[j][2])
+            if st > 0.75 or sd > 0.7:
+                print(f"[FAIL] 메타 유사 {st:.0%}/{sd:.0%}: "
+                      f"{os.path.relpath(metas[i][0], ROOT)} ↔ {os.path.relpath(metas[j][0], ROOT)}")
+                warn += 1
+    fails += warn
+    if warn == 0:
+        print("[OK] title/description 쌍별 유사도 — 과도한 템플릿 복제 없음 (title ≤75%, desc ≤70%)")
 
     # 4) 내부 링크 무결성 (생성된 경로 대비)
     valid = set()

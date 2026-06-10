@@ -503,10 +503,11 @@ def menu_html(active):
             ("/reviews/#write", "후기 작성 안내"),
         ]),
         li("customer", "/customer/", "고객센터", [
-            ("/customer/#notice", "공지사항"),
+            ("/customer/#sec-1", "공지사항"),
             ("/geumcheon-gu/faq/", "자주 묻는 질문"),
-            ("/customer/#inquiry", "1:1 문의"),
-            ("/customer/#partner", "제휴·기업 문의"),
+            ("/customer/#sec-2", "1:1 문의"),
+            ("/customer/#sec-4", "제휴·기업 문의"),
+            ("/about/", "운영팀 소개"),
             ("/privacy/", "개인정보처리방침"),
             ("/terms/", "이용약관"),
         ]),
@@ -555,9 +556,9 @@ def footer_html():
   <div><b>개인정보보호책임자</b> {COMPANY['privacy_officer']}</div>
 </div>
 <div class="footer-policies">
-  <a href="/customer/#notice">공지사항</a><a href="/geumcheon-gu/faq/">자주 묻는 질문</a>
-  <a href="/customer/#inquiry">1:1 문의</a><a href="/privacy/">개인정보처리방침</a>
-  <a href="/terms/">이용약관</a><a href="/youth/">청소년보호정책</a>
+  <a href="/customer/#sec-1">공지사항</a><a href="/geumcheon-gu/faq/">자주 묻는 질문</a>
+  <a href="/customer/#sec-2">1:1 문의</a><a href="/about/">운영팀 소개</a>
+  <a href="/privacy/">개인정보처리방침</a><a href="/terms/">이용약관</a><a href="/youth/">청소년보호정책</a>
 </div>
 <div class="footer-bottom">
   © 2026 {COMPANY['name']}. All rights reserved.
@@ -765,9 +766,9 @@ def cta_band(title="오늘 밤, 가까운 곳에서 휴식을 예약하세요", 
 </div></div></section>"""
 
 def byline():
-    """저자·감수·업데이트 표기 (E-E-A-T 신뢰 신호)."""
+    """저자·감수·업데이트 표기 (E-E-A-T 신뢰 신호) — 저자 소개 페이지로 연결."""
     return (f'<div class="byline">'
-            f'<span class="au">작성 · {BRAND_SHORT} 운영팀</span>'
+            f'<span class="au"><a href="/about/" style="color:inherit">작성 · {BRAND_SHORT} 운영팀</a></span>'
             f'<span>감수 · {COMPANY["ceo"]} ({COMPANY["name"]})</span>'
             f'<span>최종 업데이트 · {UPDATED.replace("-", ".")}</span></div>')
 
@@ -775,8 +776,9 @@ def article_ld(title, desc, path):
     return {
         "@context": "https://schema.org", "@type": "Article",
         "headline": title, "description": desc, "inLanguage": "ko-KR",
-        "author": {"@type": "Organization", "name": BRAND, "url": BASE_URL + "/"},
-        "publisher": {"@type": "Organization", "name": COMPANY["name"], "url": BASE_URL + "/"},
+        "author": {"@type": "Organization", "name": f"{BRAND_SHORT} 운영팀", "url": BASE_URL + "/about/"},
+        "publisher": {"@type": "Organization", "name": COMPANY["name"], "url": BASE_URL + "/",
+                      "logo": {"@type": "ImageObject", "url": BASE_URL + "/icon-512.png"}},
         "mainEntityOfPage": BASE_URL + path,
         "image": BASE_URL + "/assets/og-cover.jpg",
         "datePublished": UPDATED, "dateModified": UPDATED,
@@ -844,6 +846,8 @@ def org_ld():
         "@context": "https://schema.org", "@type": "Organization",
         "name": BRAND, "legalName": COMPANY["name"], "url": BASE_URL + "/",
         "telephone": PHONE_DISP,
+        "logo": BASE_URL + "/icon-512.png",
+        "image": BASE_URL + "/assets/og-cover.jpg",
         "address": {"@type": "PostalAddress", "addressLocality": "금천구",
                     "addressRegion": "서울특별시", "addressCountry": "KR"},
     }
@@ -860,6 +864,7 @@ def localbiz_ld(name=None, area="서울특별시 금천구", path="/"):
         "@type": "HealthAndBeautyBusiness",
         "name": name or BRAND, "url": BASE_URL + path,
         "telephone": PHONE_DISP, "priceRange": "₩₩",
+        "image": BASE_URL + "/assets/og-cover.jpg",
         "areaServed": {"@type": "AdministrativeArea", "name": area},
         "address": {"@type": "PostalAddress", "addressLocality": "금천구",
                     "addressRegion": "서울특별시", "addressCountry": "KR"},

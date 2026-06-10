@@ -32,11 +32,20 @@ python3 tools/check.py    # 도어웨이 유사도·title 고유성·JSON-LD·�
 `data_themes.py`·`data_courses.py`·`data_magazine.py`(테마·코스·매거진 콘텐츠) / `check.py`(QA) /
 `indexnow.py`·`google_indexing.py`(색인 통보) / `gen_icons.py`(브랜드 이미지)
 
-## 배포 전 점검 결과 (tools/check.py)
+## 배포 전 점검 결과 (tools/check.py — 전 항목 PASS)
 
-- 동 페이지 쌍별 유사도 평균 32% / 역 36% / 테마 10% (목표 ≤ ~40%)
-- title·description 100% 고유, JSON-LD 파싱 0오류, 내부 링크 깨짐 0
-- 인덱스 페이지 본문 2,000자 이상 (공백 포함)
+- 도어웨이 유사도: 동 31% / 역 28% / 테마 11% / 매거진 10% (목표 ≤ ~40%)
+- **전 페이지(57) 본문 2,000~2,500자** (공백 포함, 정책 3종은 법적 고지문서로 예외 — 억지 패딩 금지)
+- title·description 100% 고유 + 쌍별 유사도 검사(title ≤75%, desc ≤70%) 통과
+- JSON-LD 파싱 0오류, 내부 링크 깨짐 0
+
+## E-E-A-T / 구글 가이드라인 대응
+
+- **저자 소개 페이지** `/about/` — Who(운영 주체)·How(예약 데이터 기반 제작·검수 방식)·Why(운영 철학) 공개, 전 페이지 바이라인에서 링크
+- 바이라인(작성·감수·업데이트 일자) 전 페이지, Article/BlogPosting `author.url` → `/about/`
+- **선호 이미지 지정**: og:image + Organization `logo`/`image`, publisher `logo` (ImageObject)
+- 현장 운영 메모(1차 데이터: 도착 시간·시간대별 이용 패턴) 전 콘텐츠 페이지 배치
+- 비의료 고지·만 19세 기준·정찰 요금 원칙 명시, 정책 3종 실질 조항으로 확충
 
 ## 배포 후 TODO
 
