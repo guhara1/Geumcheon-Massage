@@ -17,10 +17,11 @@
 
 사용법:
   python3 tools/google_indexing.py --all          # sitemap.xml 전체
+  python3 tools/google_indexing.py --changed      # 직전 커밋 대비 변경 페이지만
   python3 tools/google_indexing.py https://.../a/  # 특정 URL
   python3 tools/google_indexing.py --all --delete  # 색인 삭제 통보(URL_DELETED)
 """
-import os, sys, json, re, glob, urllib.request, urllib.error
+import os, sys, json, re, glob, subprocess, urllib.request, urllib.error
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BASE = "https://geumcheon-massage.pages.dev"
@@ -47,6 +48,24 @@ def urls_from_sitemap():
     return re.findall(r"<loc>([^<]+)</loc>", open(sm, encoding="utf-8").read())
 
 
+def urls_changed():
+    """직전 커밋 대비 변경된 index.html → URL (없으면 전체로 폴백)."""
+    try:
+        out = subprocess.check_output(
+            ["git", "diff", "--name-only", "--diff-filter=ACMR", "HEAD~1", "HEAD"],
+            cwd=ROOT, text=True)
+    except subprocess.CalledProcessError:
+        out = ""
+    urls = []
+    for f in out.splitlines():
+        f = f.replace(os.sep, "/")
+        if f == "index.html":
+            urls.append(BASE + "/")
+        elif f.endswith("/index.html"):
+            urls.append(BASE + "/" + f[:-len("index.html")])
+    return urls or urls_from_sitemap()
+
+
 def publish(url, token, typ):
     body = json.dumps({"url": url, "type": typ}).encode("utf-8")
     req = urllib.request.Request(API, data=body, headers={
@@ -64,6 +83,8 @@ def main(argv):
     args = [a for a in argv if a not in ("--delete",)]
     if "--all" in args:
         urls = urls_from_sitemap()
+    elif "--changed" in args:
+        urls = urls_changed()
     else:
         urls = [a for a in args if a.startswith("http")]
     if not urls:

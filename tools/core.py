@@ -647,6 +647,7 @@ def page(path, title, desc, active, body, jsonld=None, og_type="website"):
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/site.webmanifest">
+<link rel="alternate" type="application/rss+xml" title="{BRAND} 매거진 RSS" href="/rss.xml">
 <style>{CSS}</style>
 {ld}
 </head>

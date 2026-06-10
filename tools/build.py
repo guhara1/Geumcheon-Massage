@@ -1497,7 +1497,7 @@ def build_info_pages():
             ("문의했는데 답이 늦으면 어떻게 하나요?", "상담이 몰리는 밤 시간대에는 문자 접수 후 순서대로 회신드립니다. 급한 예약은 전화 재시도가 가장 빠릅니다.")])
 
 
-# ---- robots / sitemap / manifest / favicon --------------------------------------
+# ---- robots / sitemap / rss / manifest / favicon --------------------------------
 def build_meta_files():
     urls = ["/", "/about/", "/geumcheon-gu/", "/geumcheon-gu/home-thai/", "/geumcheon-gu/coverage/",
             "/geumcheon-gu/area/", "/geumcheon-gu/stations/", "/themes/", "/course/",
@@ -1518,6 +1518,7 @@ def build_meta_files():
         p = prio.get(u, "0.8" if u.count("/") <= 2 else "0.75")
         freq = "daily" if u == "/" else "weekly"
         items += (f"  <url><loc>{BASE_URL}{u}</loc>"
+                  f"<lastmod>{UPDATED}</lastmod>"
                   f"<changefreq>{freq}</changefreq><priority>{p}</priority></url>\n")
     sitemap = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
@@ -1525,12 +1526,20 @@ def build_meta_files():
     with open(os.path.join(ROOT, "sitemap.xml"), "w", encoding="utf-8") as f:
         f.write(sitemap)
 
+    build_rss()
+
     robots = ("User-agent: *\nAllow: /\nDisallow: /tools/\n\n"
+              "# 검색엔진 크롤러 명시 허용\n"
+              "User-agent: Googlebot\nAllow: /\n"
+              "User-agent: Yeti\nAllow: /\n"            # 네이버
+              "User-agent: Bingbot\nAllow: /\n"
+              "User-agent: Daum\nAllow: /\n\n"
               "User-agent: GPTBot\nAllow: /\n"
               "User-agent: ClaudeBot\nAllow: /\n"
               "User-agent: Google-Extended\nAllow: /\n\n"
               f"Sitemap: {BASE_URL}/sitemap.xml\n"
-              f"Host: {BASE_URL.replace('https://','')}\n")
+              f"Host: {BASE_URL.replace('https://','')}\n"
+              f"# RSS: {BASE_URL}/rss.xml (네이버 서치어드바이저 RSS 제출용)\n")
     with open(os.path.join(ROOT, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(robots)
 
@@ -1563,6 +1572,45 @@ def build_meta_files():
     # IndexNow 인증 키 파일 — https://<도메인>/<KEY>.txt 로 노출되어야 함
     with open(os.path.join(ROOT, f"{INDEXNOW_KEY}.txt"), "w", encoding="utf-8") as f:
         f.write(INDEXNOW_KEY)
+
+
+def build_rss():
+    """RSS 2.0 피드 — 매거진 글 (네이버 서치어드바이저 RSS 제출 + 신규 글 빠른 발견)."""
+    from email.utils import format_datetime
+    from datetime import datetime, timezone, timedelta
+    kst = timezone(timedelta(hours=9))
+
+    def rfc822(date_str):
+        return format_datetime(datetime.strptime(date_str, "%Y-%m-%d").replace(hour=9, tzinfo=kst))
+
+    def esc(t):
+        return t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    items = ""
+    for p in sorted(POSTS, key=lambda x: x["date"], reverse=True):
+        link = f"{BASE_URL}/magazine/{p['slug']}/"
+        items += (
+            "  <item>\n"
+            f"    <title>{esc(p['h1'])}</title>\n"
+            f"    <link>{link}</link>\n"
+            f"    <guid isPermaLink=\"true\">{link}</guid>\n"
+            f"    <description>{esc(p['desc'])}</description>\n"
+            f"    <category>{esc(p['category'])}</category>\n"
+            f"    <pubDate>{rfc822(p['date'])}</pubDate>\n"
+            "  </item>\n")
+    rss = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n'
+        "<channel>\n"
+        f"  <title>{BRAND} 매거진</title>\n"
+        f"  <link>{BASE_URL}/magazine/</link>\n"
+        "  <description>금천 출장마사지·홈타이 이용 가이드, 테마 비교, 금천 지역 생활 정보</description>\n"
+        "  <language>ko</language>\n"
+        f"  <lastBuildDate>{rfc822(UPDATED)}</lastBuildDate>\n"
+        f'  <atom:link href="{BASE_URL}/rss.xml" rel="self" type="application/rss+xml"/>\n'
+        + items + "</channel>\n</rss>\n")
+    with open(os.path.join(ROOT, "rss.xml"), "w", encoding="utf-8") as f:
+        f.write(rss)
 
 
 # ---------------------------------------------------------------------------

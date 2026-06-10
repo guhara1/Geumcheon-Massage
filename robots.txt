@@ -2,6 +2,16 @@ User-agent: *
 Allow: /
 Disallow: /tools/
 
+# 검색엔진 크롤러 명시 허용
+User-agent: Googlebot
+Allow: /
+User-agent: Yeti
+Allow: /
+User-agent: Bingbot
+Allow: /
+User-agent: Daum
+Allow: /
+
 User-agent: GPTBot
 Allow: /
 User-agent: ClaudeBot
@@ -11,3 +21,4 @@ Allow: /
 
 Sitemap: https://geumcheon-massage.pages.dev/sitemap.xml
 Host: geumcheon-massage.pages.dev
+# RSS: https://geumcheon-massage.pages.dev/rss.xml (네이버 서치어드바이저 RSS 제출용)
