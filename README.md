@@ -4,7 +4,7 @@
 지역 SEO 사이트입니다. 굿데이 강서 프로젝트의 재사용 블루프린트(BLUEPRINT.md)를 기반으로 제작했습니다.
 
 - 상호: **금천 VIP 마사지** · 예약전화: **0508-202-4719**
-- 배포 도메인(예정): `https://geumcheon-massage.pages.dev` (Cloudflare Pages)
+- 배포 도메인: `https://geumcheon-massage.pages.dev` (Cloudflare Pages)
 - 총 56페이지
 
 ## 사이트 구조 (도어웨이 회피 원칙)
@@ -50,6 +50,5 @@ python3 tools/check.py    # 도어웨이 유사도·title 고유성·JSON-LD·�
 ## 배포 후 TODO
 
 - [ ] `tools/core.py`의 `COMPANY` 실제 사업자 정보로 교체 (대표자명·사업자번호·통신판매신고)
-- [ ] 실제 도메인 확정 시 `core.py`/`indexnow.py`/`google_indexing.py`의 `BASE_URL`·`HOST` 교체 후 재빌드
-- [ ] Cloudflare Pages 연결, Search Console·네이버 서치어드바이저·Bing 등록 + sitemap 제출
+- [ ] Cloudflare Pages 연결 확인, Search Console·네이버 서치어드바이저·Bing 등록 + sitemap 제출
 - [ ] IndexNow 키 파일(`<KEY>.txt`)이 도메인 루트에서 열리는지 확인
