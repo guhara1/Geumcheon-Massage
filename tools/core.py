@@ -14,8 +14,9 @@ import json
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from data_themes import THEMES          # noqa: E402
-from data_courses import COURSE_DETAIL  # noqa: E402
+from data_themes import THEMES            # noqa: E402
+from data_courses import COURSE_DETAIL    # noqa: E402
+from data_magazine import POSTS           # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Brand / business constants  (replace placeholders before going live)
@@ -171,14 +172,14 @@ h2.sec{font-size:clamp(28px,4vw,46px);letter-spacing:-.03em;font-weight:800;marg
 /* header */
 header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
   background:rgba(11,11,14,.78);border-bottom:1px solid var(--line)}
-.nav{max-width:1240px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:18px}
+.nav{max-width:1240px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-.02em;white-space:nowrap;flex-shrink:0}
 .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--grad);display:grid;place-items:center;
   color:#1a1208;font-weight:800;font-family:"Cormorant Garamond",serif;font-style:italic;font-size:20px}
 .brand small{display:block;font-size:10.5px;letter-spacing:.16em;color:var(--gold);font-weight:700}
 .menu{list-style:none;display:flex;align-items:center;gap:2px;margin-left:auto}
 .menu>li{position:relative}
-.menu>li>a{display:block;padding:10px 10px;font-size:13.5px;color:var(--text);border-radius:9px;font-weight:600;white-space:nowrap}
+.menu>li>a{display:block;padding:10px 8px;font-size:13px;color:var(--text);border-radius:9px;font-weight:600;white-space:nowrap}
 .menu>li>a:hover{background:rgba(255,255,255,.05)}
 .menu>li>a.active{color:var(--gold)}
 .submenu{position:absolute;top:calc(100% + 6px);left:0;min-width:212px;list-style:none;padding:8px;
@@ -192,7 +193,7 @@ header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);
 .submenu li.has-sub>a::after{content:"›";float:right;color:var(--dim);font-weight:700}
 .submenu .sub2{position:absolute;top:-9px;left:calc(100% + 7px);transform:translateX(6px)}
 .submenu li.has-sub:hover>.sub2,.submenu li.has-sub:focus-within>.sub2{opacity:1;visibility:visible;transform:none}
-.cta-pill{margin-left:6px;padding:11px 16px!important;background:var(--grad);color:#1a1208!important;
+.cta-pill{margin-left:4px;padding:10px 14px!important;background:var(--grad);color:#1a1208!important;
   border-radius:999px;font-weight:800!important;white-space:nowrap}
 .toggle{display:none;margin-left:auto;background:none;border:1px solid var(--line);color:var(--text);
   font-size:20px;width:44px;height:44px;border-radius:11px;cursor:pointer}
@@ -406,7 +407,7 @@ details>div{padding:0 22px 20px;color:var(--muted);font-size:14.5px;line-height:
 .card,.note-card,.review{contain:layout style}
 @media(hover:none){.glass,.floating{backdrop-filter:none}}
 @media(prefers-reduced-motion:reduce){.marquee-track,.pulse{animation:none}.reveal{opacity:1;transform:none}}
-@media(max-width:1200px){
+@media(max-width:1240px){
   .toggle{display:block}
   .menu{position:fixed;inset:64px 0 auto 0;flex-direction:column;align-items:stretch;gap:2px;margin:0;
     padding:14px;background:var(--bg);border-bottom:1px solid var(--line);max-height:calc(100vh - 64px);
@@ -492,6 +493,9 @@ def menu_html(active):
         ]),
         li("reservation", "/reservation/", "예약안내"),
         li("guide", "/guide/", "이용가이드"),
+        li("magazine", "/magazine/", "매거진", [
+            ("/magazine/", "전체 글"),
+        ] + [(f"/magazine/{p['slug']}/", p["menu"]) for p in POSTS]),
         li("reviews", "/reviews/", "후기", [
             ("/reviews/#all", "전체 후기"),
             ("/reviews/#region", "지역별 후기"),
@@ -536,7 +540,7 @@ def footer_html():
     <a href="/course/price/">가격 안내</a><a href="/course/guide/">코스 선택 가이드</a></div>
   <div><h4>이용 안내</h4>
     <a href="/reservation/">예약안내</a><a href="/guide/">이용가이드</a>
-    <a href="/reviews/">후기</a><a href="/customer/">고객센터</a></div>
+    <a href="/magazine/">매거진</a><a href="/reviews/">후기</a><a href="/customer/">고객센터</a></div>
 </div>
 <div class="footer-ops">
   <div><b>운영 시간</b>{HOURS}</div>

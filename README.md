@@ -5,7 +5,7 @@
 
 - 상호: **금천 VIP 마사지** · 예약전화: **0508-202-4719**
 - 배포 도메인(예정): `https://geumcheon-massage.pages.dev` (Cloudflare Pages)
-- 총 47페이지
+- 총 56페이지
 
 ## 사이트 구조 (도어웨이 회피 원칙)
 
@@ -17,6 +17,7 @@
 | 역세권 | `/geumcheon-gu/stations/…` 3개 | 가산디지털단지역(1·7호선 환승, URL 1개)·독산역·금천구청역. 출구별 페이지 없음 |
 | 테마 | `/themes/` + 14개 | 독립 페이지. **지역·역·테마 조합 페이지 생성 금지** |
 | 코스 | `/course/` + 8개 | 피로회복·아로마·스포츠·홈타이·커플·단체·가격·가이드 |
+| 매거진 | `/magazine/` + 글 8편 | 글당 2,000~2,500자. 지역·역·테마·코스·블로그 상호 내부링크(롱테일 앵커), BlogPosting 스키마 |
 | 기타 | 예약안내·이용가이드·후기·고객센터·정책 3종 | |
 
 ## 빌드 / 점검
@@ -28,7 +29,7 @@ python3 tools/check.py    # 도어웨이 유사도·title 고유성·JSON-LD·�
 ```
 
 `tools/` 구성: `core.py`(프레임워크·데이터 모델) / `build.py`(페이지 빌더) /
-`data_themes.py`·`data_courses.py`(테마·코스 콘텐츠) / `check.py`(QA) /
+`data_themes.py`·`data_courses.py`·`data_magazine.py`(테마·코스·매거진 콘텐츠) / `check.py`(QA) /
 `indexnow.py`·`google_indexing.py`(색인 통보) / `gen_icons.py`(브랜드 이미지)
 
 ## 배포 전 점검 결과 (tools/check.py)

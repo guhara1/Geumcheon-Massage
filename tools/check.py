@@ -50,12 +50,14 @@ def run():
     fails = 0
 
     # 1) 그룹별 유사도 (목표 ≤ ~40-45%)
-    from core import DONGS, STATIONS, THEMES  # noqa
+    from core import DONGS, STATIONS, THEMES, POSTS  # noqa
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     dongs = [f"/geumcheon-gu/{d['slug']}/" for d in DONGS]
     stations = [f"/geumcheon-gu/stations/{s['slug']}/" for s in STATIONS]
     themes = [f"/themes/{t['slug']}/" for t in THEMES]
-    for name, grp in [("동 페이지", dongs), ("역 페이지", stations), ("테마 페이지", themes)]:
+    posts = [f"/magazine/{p['slug']}/" for p in POSTS]
+    for name, grp in [("동 페이지", dongs), ("역 페이지", stations),
+                      ("테마 페이지", themes), ("매거진 글", posts)]:
         if not group_sim(name, grp):
             fails += 1
 
@@ -97,6 +99,15 @@ def run():
         flag = "OK" if n >= 2000 else "WARN"
         print(f"[{flag}] 본문 분량 {p}: {n:,}자 (공백 포함)")
         if n < 2000:
+            fails += 1
+
+    # 3b) 매거진 글 본문 분량 (목표 2,000~2,500자, 공백 포함)
+    for p in posts:
+        f = os.path.join(ROOT, p.strip("/"), "index.html")
+        n = len(main_text(f))
+        flag = "OK" if 2000 <= n <= 2600 else "WARN"
+        print(f"[{flag}] 매거진 분량 {p}: {n:,}자 (공백 포함)")
+        if not (2000 <= n <= 2600):
             fails += 1
 
     # 4) 내부 링크 무결성 (생성된 경로 대비)

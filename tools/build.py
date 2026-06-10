@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from core import (  # noqa: E402
     ROOT, BASE_URL, BRAND, BRAND_SHORT, PHONE_DISP, PHONE_TEL, HOURS,
     INDEXNOW_KEY, COMPANY, DONGS, DONG_ZONES, STATIONS, STATION_ZONES,
-    COURSES, TIME_PRICING, THEMES, COURSE_DETAIL,
+    COURSES, TIME_PRICING, THEMES, COURSE_DETAIL, POSTS, UPDATED,
     page, write, breadcrumb, bc_ld, faq_block, faq_ld, notes_block,
     price_menu_block, offer_ld, cta_band, byline, article_ld, render_lux,
     content_page, org_ld, website_ld, localbiz_ld, service_ld,
@@ -29,6 +29,19 @@ import json  # noqa: E402
 
 DONG_BY_SLUG = {d["slug"]: d for d in DONGS}
 STATION_BY_SLUG = {s["slug"]: s for s in STATIONS}
+POST_BY_SLUG = {p["slug"]: p for p in POSTS}
+
+# 지역·역 → 매거진 글 추천 (내부링크 교차 연결)
+DONG_POSTS = {
+    "gasan-dong": ["night-worker-recovery", "home-thai-vs-swedish"],
+    "doksan-dong": ["first-time-guide", "couple-massage-guide"],
+    "siheung-dong": ["workout-recovery-timing", "sleep-massage"],
+}
+STATION_POSTS = {
+    "gasan-digital-complex-station": ["night-worker-recovery", "hotel-room-massage"],
+    "doksan-station": ["first-time-guide", "pressure-guide"],
+    "geumcheon-gu-office-station": ["workout-recovery-timing", "sleep-massage"],
+}
 
 
 def sec(_id, eyebrow, heading, paras, extra=""):
@@ -419,7 +432,10 @@ def build_dong_pages():
                 f"{name}({d['character']})에서는 생활 패턴에 맞는 테마·코스 문의가 많습니다. 상세 설명은 전용 페이지에서 확인하세요.",
                 ("ul", ['<a href="/themes/">테마별 안내</a>', '<a href="/course/">전체 코스</a>',
                         '<a href="/course/fatigue/">피로 회복 관리</a>', '<a href="/course/home-thai/">홈타이 코스</a>',
-                        '<a href="/course/price/">가격 안내</a>'])]),
+                        '<a href="/course/price/">가격 안내</a>']),
+                f"{name} 생활 패턴과 이어지는 읽을거리도 매거진에 정리되어 있습니다.",
+                ("ul", [f'<a href="/magazine/{ps}/">매거진 · {POST_BY_SLUG[ps]["h1"].split(" — ")[0]}</a>'
+                        for ps in DONG_POSTS.get(slug, [])])]),
             ("예약·준비·위생 안내", [
                 "예약 가능 시간, 방문 전 준비물, 위생·안전 기준은 페이지마다 반복하지 않고 전용 안내에서 확인하실 수 있습니다.",
                 ("ul", ['<a href="/geumcheon-gu/hours/">예약 가능 시간</a>',
@@ -566,7 +582,10 @@ def build_station_pages():
             ("관련 테마·코스", [
                 "역세권에서 많이 찾는 관리 유형은 테마·코스 전용 페이지에서 확인하세요. 역과 테마를 조합한 별도 페이지는 운영하지 않습니다.",
                 ("ul", ['<a href="/themes/">테마별 안내</a>', '<a href="/course/">전체 코스</a>',
-                        '<a href="/course/price/">가격 안내</a>'])]),
+                        '<a href="/course/price/">가격 안내</a>']),
+                f"{name} 생활권과 이어지는 매거진 글도 함께 읽어보세요.",
+                ("ul", [f'<a href="/magazine/{ps}/">매거진 · {POST_BY_SLUG[ps]["h1"].split(" — ")[0]}</a>'
+                        for ps in STATION_POSTS.get(slug, [])])]),
             ("예약·준비·위생 안내", [
                 "예약 가능 시간, 방문 전 준비물, 위생·안전 기준은 전용 안내에서 확인하실 수 있습니다.",
                 ("ul", ['<a href="/geumcheon-gu/hours/">예약 가능 시간</a>',
@@ -749,6 +768,107 @@ def build_course_pages():
             service=c.get("service"),
             top_links=[("tel:" + PHONE_TEL, "예약문의", True),
                        ("/course/", "전체 코스"), ("/course/price/", "가격 안내")])
+
+
+# ---- 매거진(블로그) -------------------------------------------------------------
+def post_card(p):
+    return (f'<a class="card reveal" href="/magazine/{p["slug"]}/">'
+            f'<div class="k">{p["category"]} · {p["date"].replace("-", ".")}</div>'
+            f'<h3>{p["h1"].split(" — ")[0].split(" —")[0]}</h3><p>{p["lead"][:80]}…</p>'
+            f'<span class="more">글 읽기 →</span></a>')
+
+
+def blogposting_ld(p):
+    path = f"/magazine/{p['slug']}/"
+    return {
+        "@context": "https://schema.org", "@type": "BlogPosting",
+        "headline": p["h1"], "description": p["desc"], "inLanguage": "ko-KR",
+        "articleSection": p["category"],
+        "author": {"@type": "Organization", "name": BRAND, "url": BASE_URL + "/"},
+        "publisher": {"@type": "Organization", "name": COMPANY["name"], "url": BASE_URL + "/"},
+        "mainEntityOfPage": BASE_URL + path,
+        "image": BASE_URL + "/assets/og-cover.jpg",
+        "datePublished": p["date"], "dateModified": UPDATED,
+    }
+
+
+def build_magazine_hub():
+    trail = [("/", "홈"), (None, "매거진")]
+    posts_sorted = sorted(POSTS, key=lambda p: p["date"], reverse=True)
+    cards = "".join(post_card(p) for p in posts_sorted)
+    mg_faq = [
+        ("매거진에는 어떤 글이 올라오나요?",
+         "이용 가이드, 테마 비교, 금천 지역 생활 정보, 건강 루틴 등 방문 관리를 더 잘 활용하기 위한 정보성 글을 게재합니다."),
+        ("글의 내용대로 예약하면 되나요?",
+         "글은 선택 기준을 돕는 참고 자료입니다. 실제 가능 여부와 구성은 예약 상담에서 위치·시간 기준으로 확정해 드립니다."),
+        ("의학 정보로 봐도 되나요?",
+         "아닙니다. 모든 글은 이완·휴식 목적의 건강관리 정보이며, 통증·질환은 의료기관 진료를 권합니다."),
+        ("새 글은 얼마나 자주 올라오나요?",
+         "비정기적으로 추가됩니다. 지역·테마 페이지와 연결되는 주제 중심으로 차례로 발행합니다."),
+    ]
+    body = (breadcrumb(trail) +
+        '<section class="block" style="padding-bottom:40px"><div class="wrap">'
+        '<span class="eyebrow"><span class="pulse"></span>MAGAZINE</span>'
+        '<h2 class="sec">매거진 — 전체 글</h2>'
+        '<p class="sec-lead" style="max-width:820px">출장마사지·홈타이를 더 잘 활용하기 위한 정보를 모았습니다. '
+        '처음 이용하는 분을 위한 단계별 가이드부터 홈타이와 스웨디시처럼 헷갈리는 테마 비교, '
+        '가산디지털단지 야근 후 회복 루틴 같은 금천 지역 생활 정보, 수면·운동과 마사지의 관계까지 — '
+        '예약 상담에서 실제로 가장 많이 받는 질문들을 글로 정리했습니다.</p>'
+        '<p class="sec-lead" style="max-width:820px;margin-top:12px">각 글에는 관련된 '
+        '<a href="/geumcheon-gu/area/" style="color:var(--gold);font-weight:700">지역별 안내</a>, '
+        '<a href="/geumcheon-gu/stations/" style="color:var(--gold);font-weight:700">지하철역별 안내</a>, '
+        '<a href="/themes/" style="color:var(--gold);font-weight:700">테마별 안내</a> 페이지가 연결되어 있어 '
+        '글을 읽다가 바로 상세 안내로 이동할 수 있습니다. 읽는 순서가 고민된다면 처음 이용 가이드 → 압 세기 고르는 법 → '
+        '관심 있는 테마 비교 순서를 권합니다.</p>'
+        f'<div class="grid g3" style="margin-top:28px">{cards}</div>'
+        '<div class="data-box" style="max-width:820px;margin-top:30px"><b>편집 기준</b>'
+        '<p>매거진의 모든 글은 검색을 위한 키워드 나열이 아니라, 실제 예약 상담에서 반복되는 질문과 예약 데이터에서 보이는 '
+        '이용 패턴을 바탕으로 작성합니다. 지역·역·테마를 조합한 중복성 글은 만들지 않으며, 글당 한 가지 주제를 깊이 있게 다룹니다.</p></div>'
+        '</div></section>' + faq_block(mg_faq) + cta_band())
+    coll = {
+        "@context": "https://schema.org", "@type": "Blog",
+        "name": f"{BRAND} 매거진", "url": BASE_URL + "/magazine/",
+        "blogPost": [{"@type": "BlogPosting", "headline": p["h1"],
+                      "url": BASE_URL + f"/magazine/{p['slug']}/",
+                      "datePublished": p["date"]} for p in posts_sorted],
+    }
+    html = page("/magazine/", "매거진 | 금천 출장마사지·홈타이 이용 가이드와 지역 정보",
+        "금천 VIP 마사지 매거진 - 출장마사지 처음 이용 가이드, 홈타이·스웨디시 비교, 가산디지털단지 야근 회복 루틴, 수면·운동과 마사지 정보를 제공합니다.",
+        "magazine", body, [bc_ld(trail), coll, faq_ld(mg_faq)])
+    write("/magazine/", html)
+
+
+def build_magazine_posts():
+    mt = [("/", "홈"), ("/magazine/", "매거진")]
+    for p in POSTS:
+        path = f"/magazine/{p['slug']}/"
+        related_cards = "".join(post_card(POST_BY_SLUG[s]) for s in p["related"] if s in POST_BY_SLUG)
+        toc_html, panels = render_lux(p["sections"])
+        panels += (
+            '<section class="lux-sec reveal" id="related"><h2>함께 읽기</h2>'
+            '<p>이 글과 이어지는 매거진 글입니다.</p>'
+            f'<div class="grid g3">{related_cards}</div></section>')
+        post_byline = (f'<div class="byline">'
+                       f'<span class="au">{p["category"]}</span>'
+                       f'<span>발행 · {p["date"].replace("-", ".")}</span>'
+                       f'<span>작성 · {BRAND_SHORT} 운영팀</span>'
+                       f'<span>최종 업데이트 · {UPDATED.replace("-", ".")}</span></div>')
+        body = (breadcrumb(mt + [(None, p["menu"])]) +
+            f'<section class="lux-hero"><div class="wrap">'
+            f'<span class="eyebrow"><span class="pulse"></span>{p["kicker"]}</span>'
+            f'<h1 class="lux-h1">{p["h1"]}</h1>'
+            f'<p class="lux-lead">{p["lead"]}</p>{post_byline}'
+            f'<div class="actions" style="margin-top:22px">'
+            f'<a class="btn btn-primary" href="tel:{PHONE_TEL}">예약문의</a>'
+            f'<a class="btn btn-ghost" href="/magazine/">매거진 전체 글</a></div></div></section>'
+            f'<section class="block lux-body" style="padding-top:34px"><div class="wrap">'
+            f'<div class="lux-grid">{toc_html}<div class="lux-main">{panels}</div></div>'
+            f'</div></section>'
+            + faq_block(p["faq"]) + cta_band())
+        trail = mt + [(None, p["menu"])]
+        jsonld = [bc_ld(trail), blogposting_ld(p), faq_ld(p["faq"])]
+        html = page(path, p["title"], p["desc"], "magazine", body, jsonld, og_type="article")
+        write(path, html)
 
 
 # ---- 예약안내 / 이용가이드 -----------------------------------------------------
@@ -1052,8 +1172,10 @@ def build_meta_files():
     urls += [f"/geumcheon-gu/stations/{s['slug']}/" for s in STATIONS]
     urls += [f"/themes/{t['slug']}/" for t in THEMES]
     urls += [f"/course/{c['slug']}/" for c in COURSE_DETAIL]
+    urls += ["/magazine/"] + [f"/magazine/{p['slug']}/" for p in POSTS]
     prio = {"/": "1.0", "/geumcheon-gu/": "0.9", "/geumcheon-gu/area/": "0.85",
-            "/geumcheon-gu/stations/": "0.85", "/themes/": "0.85", "/course/": "0.85"}
+            "/geumcheon-gu/stations/": "0.85", "/themes/": "0.85", "/course/": "0.85",
+            "/magazine/": "0.8"}
     items = ""
     for u in urls:
         p = prio.get(u, "0.8" if u.count("/") <= 2 else "0.75")
@@ -1120,6 +1242,8 @@ def main():
     build_theme_pages()
     build_course_hub()
     build_course_pages()
+    build_magazine_hub()
+    build_magazine_posts()
     build_reservation()
     build_guide()
     build_reviews()
