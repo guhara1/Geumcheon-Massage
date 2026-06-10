@@ -597,8 +597,13 @@ JS = """
 # ---------------------------------------------------------------------------
 # Page shell
 # ---------------------------------------------------------------------------
+NAVER_SITE_VERIFICATION = "271e5c724d1bc4957035ea4b168d0c516d9fe32e"  # 네이버 서치어드바이저
+
+
 def page(path, title, desc, active, body, jsonld=None, og_type="website"):
     canonical = BASE_URL + path
+    naver_verify = (f'\n<meta name="naver-site-verification" content="{NAVER_SITE_VERIFICATION}">'
+                    if path == "/" else "")
     ld = ""
     if jsonld:
         blocks = jsonld if isinstance(jsonld, list) else [jsonld]
@@ -618,7 +623,7 @@ def page(path, title, desc, active, body, jsonld=None, og_type="website"):
 <meta name="format-detection" content="telephone=no">
 <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
 <meta name="googlebot" content="index,follow">
-<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="referrer" content="strict-origin-when-cross-origin">{naver_verify}
 <title>{title}</title>
 <meta name="description" content="{desc}">
 <meta name="author" content="{COMPANY['name']} 운영팀">
